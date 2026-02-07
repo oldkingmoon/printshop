@@ -4,8 +4,8 @@ __pycache__/
 *.pyc
 *.pyo
 
-# Embeddings (large files)
-embeddings/
+# Embeddings (large files) - 但保留 knowledge-vectors.json
+# embeddings/
 
 # Environment
 .env
