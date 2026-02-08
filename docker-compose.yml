@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 数据库
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: printshop-db
+    environment:
+      POSTGRES_USER: printshop
+      POSTGRES_PASSWORD: printshop123
+      POSTGRES_DB: printshop
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./src/schema.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U printshop"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Redis 缓存/队列
+  redis:
+    image: redis:7-alpine
+    container_name: printshop-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  # FastAPI 后端
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: printshop-api
+    environment:
+      DATABASE_URL: postgresql://printshop:printshop123@db:5432/printshop
+      REDIS_URL: redis://redis:6379
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./uploads:/app/uploads
+
+  # Next.js 前端
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: printshop-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://api:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+
+  # Celery Worker (异步任务)
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: printshop-worker
+    command: celery -A tasks worker --loglevel=info
+    environment:
+      DATABASE_URL: postgresql://printshop:printshop123@db:5432/printshop
+      REDIS_URL: redis://redis:6379
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - ./uploads:/app/uploads
+
+volumes:
+  postgres_data:
+  redis_data:

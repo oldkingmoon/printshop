@@ -1,0 +1,19 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# 复制 package.json
+COPY src/frontend/package*.json ./
+
+# 安装依赖
+RUN npm install
+
+# 复制代码
+COPY src/frontend .
+
+# 构建
+RUN npm run build
+
+EXPOSE 3000
+
+CMD ["npm", "start"]
