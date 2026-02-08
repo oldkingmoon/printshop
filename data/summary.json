@@ -1,0 +1,10 @@
+{
+  "scrapeTime": "2026-02-08T03:25:02.600Z",
+  "totalCategories": 373,
+  "totalProducts": 5,
+  "pagesScraped": 5,
+  "files": {
+    "categories": "/home/oldking/projects/printshop/data/categories-2026-02-08.json",
+    "products": "/home/oldking/projects/printshop/data/products-2026-02-08.json"
+  }
+}
